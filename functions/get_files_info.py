@@ -1,29 +1,36 @@
 import os
 
 def get_files_info(working_directory, directory="."):
-    
     try:
-        absolute_path = os.path.abspath(working_directory)
+        # Resolve absolute working directory
+        working_dir_abs = os.path.abspath(working_directory)
 
-        target_directory = os.path.join(absolute_path, directory)
+        # Build and normalize target directory path
+        target_dir = os.path.normpath(
+            os.path.join(working_dir_abs, directory)
+        )
 
-        valid_target_directory = os.path.commonpath([absolute_path, target_directory]) == absolute_path
+        # Security check: target must be inside working directory
+        if os.path.commonpath([working_dir_abs, target_dir]) != working_dir_abs:
+            return f'Error: Cannot list "{directory}" as it is outside the permitted working directory'
 
-        if not valid_target_directory:
-            raise ValueError(f'Error: Cannot list "{directory}" as it is outside the permitted working directory')
-    
-        if not os.path.isdir(target_directory):
-            raise ValueError(f'Error: "{directory}" is not a directory')
-    
-        entries = []
+        # Must be an existing directory
+        if not os.path.isdir(target_dir):
+            return f'Error: "{directory}" is not a directory'
 
-        for entry in os.listdir(target_directory):
-            path = os.path.join(target_directory, entry)
+        lines = []
+
+        for name in os.listdir(target_dir):
+            path = os.path.join(target_dir, name)
+            size = os.path.getsize(path)
             is_dir = os.path.isdir(path)
-            size = os.path.getsize(path) if not is_dir else None
 
-            entries.append(f"name: {entry} size={size}, is_dir={is_dir}")
+            lines.append(
+                f"- {name}: file_size={size} bytes, is_dir={is_dir}"
+            )
 
-        return "/n".join(entries)
+        return "\n".join(lines)
+
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error: {e}"
+

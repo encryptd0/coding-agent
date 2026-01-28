@@ -10,5 +10,6 @@ wheels/
 .venv
 .env
 
-# Test apps
+# Test programs
 calculator
+test_get_files_info.py
